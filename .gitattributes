@@ -1,0 +1,16 @@
+# For text files, normalize line endings to LF in the repo and convert to CRLF on Windows checkout
+* text=auto
+
+# Handle known binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.zip binary
+*.exe binary
+*.dll binary
+
+# Prevent changes to specific minified files
+*.min.css text eol=lf
+*.min.js text eol=lf

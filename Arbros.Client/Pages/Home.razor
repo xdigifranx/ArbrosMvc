@@ -1,0 +1,15 @@
+﻿@page "/"
+
+@inject HttpClient Http
+<EditForm Model="NuevaPersona">
+	<InputText></InputText>
+</EditForm>
+
+@code{
+	Personas NuevaPersona = new Personas();
+
+	public async Task CrearPersona(Personas MisPersonas)
+	{
+		var repuesta = await Http.PostAsJsonAsync("api/Persona", MisPersonas);
+	}
+}
