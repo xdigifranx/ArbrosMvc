@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Arbros.Shared.Models;
 using Arbros.Server;
 
-namespace Arbros.Server.Controller
+namespace Arbros.Server.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -40,7 +40,6 @@ namespace Arbros.Server.Controller
             return Ok(miobjeto);
         }
         [HttpPost]
-
         public async Task<ActionResult<Persona>> CreatePersona(Persona objeto)
         {
 

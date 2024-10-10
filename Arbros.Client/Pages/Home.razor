@@ -1,15 +1,33 @@
 ﻿@page "/"
-
+@using Arbros.Shared.Models
 @inject HttpClient Http
+
 <EditForm Model="NuevaPersona">
-	<InputText></InputText>
+	<DataAnnotationsValidator />
+	<ValidationSummary />
+	<InputText @bind-Value="NuevaPersona.Name" placeholder="Nombre"></InputText>
+	<button type="submit" @onclick="(()=>CrearPersona(NuevaPersona))" >Guardar</button>
 </EditForm>
+<div> 
+	<p> @NuevaPersona.Name</p>
+</div>
 
 @code{
-	Personas NuevaPersona = new Personas();
+	Persona NuevaPersona = new Persona();
 
-	public async Task CrearPersona(Personas MisPersonas)
+	public async Task CrearPersona(Persona MisPersonas)
 	{
-		var repuesta = await Http.PostAsJsonAsync("api/Persona", MisPersonas);
+		var respuesta = await Http.PostAsJsonAsync("api/Persona", MisPersonas);
+		
+		if (respuesta.IsSuccessStatusCode)
+		{
+			NuevaPersona = new Persona();
+		}
+		else
+		{
+			var errorMessage = await respuesta.Content.ReadAsStringAsync();
+			Console.WriteLine($"Error al crear persona: {errorMessage}");
+		}
 	}
+
 }

@@ -8,10 +8,22 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+ builder.Services.AddCors(options =>
+{
+	options.AddPolicy("AllowAnyOrigin",
+		builder =>
+		{
+			builder.AllowAnyOrigin()
+				   .AllowAnyMethod()
+				   .AllowAnyHeader();
+		});
+});
+
 builder.Services.AddControllers();
 
 builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 // Configurar el DbContext
+
 builder.Services.AddDbContext<AplicacionDbContex>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -27,6 +39,7 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+app.UseCors("AllowAnyOrigin");
 app.UseAntiforgery();
 app.UseAuthorization();
 

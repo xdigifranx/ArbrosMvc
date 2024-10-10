@@ -3,36 +3,59 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-namespace Arbros.Server;
-public class Startup
+using Microsoft.Extensions.Hosting;
+
+namespace Arbros.Server
 {
-    public IConfiguration Configuration { get; }
+	public class Startup
+	{
+		public IConfiguration Configuration { get; }
 
-    public Startup(IConfiguration configuration)
-    {
-        Configuration = configuration;
-    }
+		public Startup(IConfiguration configuration)
+		{
+			Configuration = configuration;
+		}
 
-    public void ConfigureServices(IServiceCollection services)
-    {
-        services.AddDbContext<AplicacionDbContex>(options =>
-            options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+		public void ConfigureServices(IServiceCollection services)
+		{
+			// Configuración de la base de datos
+			services.AddDbContext<AplicacionDbContex>(options =>
+				options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
 
-        services.AddControllers();
-    }
+			// Agregar CORS para permitir solicitudes desde Blazor WebAssembly
+			services.AddCors(options =>
+			{
+				options.AddPolicy("AllowAllOrigins",
+					builder => builder.AllowAnyOrigin()
+									  .AllowAnyMethod()
+									  .AllowAnyHeader());
+			});
 
-    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
-    {
-        if (env.IsDevelopment())
-        {
-            app.UseDeveloperExceptionPage();
-        }
+			// Agregar controladores (API)
+			services.AddControllers();
+		}
 
-        app.UseRouting();
-        app.UseEndpoints(endpoints =>
-        {
-            endpoints.MapControllers();
-        });
-    }
+		public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+		{
+			if (env.IsDevelopment())
+			{
+				app.UseDeveloperExceptionPage();
+			}
+
+
+			// Usar CORS
+			app.UseCors("AllowAllOrigins");
+
+			app.UseStaticFiles();
+
+			app.UseRouting();
+
+			app.UseEndpoints(endpoints =>
+			{
+				endpoints.MapControllers(); // Mapeo de controladores API
+			});
+		}
+	}
 }
+
 
