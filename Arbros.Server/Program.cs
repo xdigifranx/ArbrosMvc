@@ -46,7 +46,6 @@ app.UseAuthorization();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
-// Mapear controladores API (si los tienes)
 app.MapControllers();
 app.Run();
 

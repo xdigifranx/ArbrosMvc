@@ -3,31 +3,134 @@
 @inject HttpClient Http
 
 <EditForm Model="NuevaPersona">
-	<DataAnnotationsValidator />
-	<ValidationSummary />
-	<InputText @bind-Value="NuevaPersona.Name" placeholder="Nombre"></InputText>
-	<button type="submit" @onclick="(()=>CrearPersona(NuevaPersona))" >Guardar</button>
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <InputText @bind-Value="NuevaPersona.Name" placeholder="Nombre" @oninput="Mayuscula"></InputText>
+    <button type="submit" @onclick="(() => CrearPersona(NuevaPersona))">Guardar</button>
 </EditForm>
-<div> 
-	<p> @NuevaPersona.Name</p>
+
+<div>
+    <SfGrid DataSource="@personas" TValue="Persona" AllowDeleting="true">
+        <GridColumns>
+            <GridColumn Field="@nameof(Persona.Name)" HeaderText="Nombre"></GridColumn>
+            <GridColumn HeaderText="Acciones" Width="150">
+                <Template>
+                    @if (context is Persona persona)
+                    {
+                        <button type="button" @onclick="(() => EliminarPersona(persona.Id))">Eliminar</button>
+                        <button type="button" @onclick="(() => AbreDialogo(persona))">Actualizar</button>
+                    }
+                </Template>
+            </GridColumn>
+        </GridColumns>
+    </SfGrid>
 </div>
 
-@code{
-	Persona NuevaPersona = new Persona();
-
-	public async Task CrearPersona(Persona MisPersonas)
-	{
-		var respuesta = await Http.PostAsJsonAsync("api/Persona", MisPersonas);
-		
-		if (respuesta.IsSuccessStatusCode)
-		{
-			NuevaPersona = new Persona();
-		}
-		else
-		{
-			var errorMessage = await respuesta.Content.ReadAsStringAsync();
-			Console.WriteLine($"Error al crear persona: {errorMessage}");
-		}
-	}
-
+@if (abrir)
+{
+    <dialog open>
+        <h3>Actualizar Persona</h3>
+        <SfTextBox @bind-Value="personaActualizada.Name" placeholder="Nombre" @oninput="Mayuscula"></SfTextBox>
+        <button type="button" @onclick="ActualizarPersona">Actualizar</button>
+        <button type="button" @onclick="CerrarDialogo">Cerrar</button>
+    </dialog>
 }
+
+@code {
+    public bool abrir = false;
+    public Persona personaActualizada = new Persona();
+    Persona NuevaPersona = new Persona();
+    List<Persona> personas = new List<Persona>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        personas = await Http.GetFromJsonAsync<List<Persona>>("api/Persona") ?? new List<Persona>();
+    }
+
+    public async Task CrearPersona(Persona nuevaPersona)
+    {
+        var respuesta = await Http.PostAsJsonAsync("api/Persona", nuevaPersona);
+
+        if (respuesta.IsSuccessStatusCode)
+        {
+            NuevaPersona = new Persona();  // Limpia el formulario
+            personas = await Http.GetFromJsonAsync<List<Persona>>("api/Persona") ?? new List<Persona>();  // Recarga la lista
+        }
+        else
+        {
+            var errorMessage = await respuesta.Content.ReadAsStringAsync();
+            Console.WriteLine($"Error al crear persona: {errorMessage}");
+        }
+    }
+
+    public async Task EliminarPersona(int id)
+    {
+        var respuesta = await Http.DeleteAsync($"api/Persona/{id}");
+
+        if (respuesta.IsSuccessStatusCode)
+        {
+            personas = await Http.GetFromJsonAsync<List<Persona>>("api/Persona") ?? new List<Persona>();  // Recarga los datos
+        }
+        else
+        {
+            var errorMessage = await respuesta.Content.ReadAsStringAsync();
+            Console.WriteLine($"Error al eliminar persona: {errorMessage}");
+        }
+    }
+
+    public async Task ActualizarPersona()
+    {
+        try
+        {
+            var respuesta = await Http.PutAsJsonAsync($"api/Persona/{personaActualizada.Id}", personaActualizada);
+
+            if (respuesta.IsSuccessStatusCode)
+            {
+                personas = await Http.GetFromJsonAsync<List<Persona>>("api/Persona") ?? new List<Persona>();
+                CerrarDialogo();
+            }
+            else
+            {
+                var errorMessage = await respuesta.Content.ReadAsStringAsync();
+                Console.WriteLine($"Error al actualizar persona: {errorMessage}");
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            Console.WriteLine($"Error de solicitud: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error inesperado: {ex.Message}");
+        }
+    }
+
+    public void AbreDialogo(Persona persona)
+    {
+        personaActualizada = new Persona
+            {
+                Id = persona.Id,
+                Name = persona.Name
+            };
+        abrir = true;
+    }
+
+    public void CerrarDialogo()
+    {
+        abrir = false;
+    }
+
+    public void Mayuscula(ChangeEventArgs e)
+    {
+        var valor = e.Value?.ToString();
+        if (!string.IsNullOrEmpty(valor))
+        {
+            // Asegúrate de capitalizar la primera letra y poner el resto en minúsculas
+            valor = char.ToUpper(valor[0]) + valor.Substring(1).ToLower();
+            NuevaPersona.Name = valor; // Actualiza el campo de nombre en el modelo
+        }
+    }
+}
+
+
+
