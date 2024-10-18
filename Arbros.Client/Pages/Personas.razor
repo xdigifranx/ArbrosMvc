@@ -1,9 +1,168 @@
 ﻿@page "/personas"
-<div>
-	<h3>Personas</h3>
+@using Arbros.Shared.Models
+@inject HttpClient Http
+<div style="padding-bottom:20px;">
+    <EditForm Model="NuevaPersona">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+        <InputText @bind-Value="NuevaPersona.Name" placeholder="Nombre" @oninput="(Microsoft.AspNetCore.Components.ChangeEventArgs e) => Mayuscula(e)"></InputText>
+        <SfButton type="submit" CssClass="e-primary" @onclick="async () => await CrearPersona(NuevaPersona)">Guardar</SfButton>
+    </EditForm>
 </div>
 
+<div class="col-lg-12 control-section">
+    <div class="content-wrapper">
+        <SfGrid DataSource="@PagedData" TValue="Persona" AllowDeleting="true">
+            <GridColumns>
+                <GridColumn Field="@nameof(Persona.Name)" HeaderText="Nombre" Width="150"></GridColumn>
+                <GridColumn HeaderText="Acciones" Width="120">
+                    <Template>
+                        @if (context is Persona persona)
+                        {
+                            <SfButton CssClass="e-danger" type="button" @onclick="async () => await EliminarPersona(persona.Id)">Eliminar</SfButton>
+                            <SfButton CssClass="e-primary" type="button" @onclick="() => AbreDialogo(persona)">Actualizar</SfButton>
+                        }
+                    </Template>
+                </GridColumn>
+            </GridColumns>
+        </SfGrid>
+        <SfPager @ref="@Page" PageSize="5" TotalItemsCount="@totalItems" NumericItemsCount="2" ItemClick="HandleNumericClick"></SfPager>
+    </div>
+</div>
+
+@if (abrir)
+{
+    <SfDialog @bind-Visible="abrir" Width="300px" ShowCloseIcon="true">
+        <DialogTemplates>
+            <Header>
+                Actualizar Persona
+            </Header>
+            <Content>
+                <SfTextBox @bind-Value="personaActualizada.Name" placeholder="Nombre" @oninput="(Microsoft.AspNetCore.Components.ChangeEventArgs e) => Mayuscula(e)"></SfTextBox>
+            </Content>
+            <FooterTemplate>
+                <SfButton CssClass="e-success" type="button" @onclick="async () => await ActualizarPersona()">Actualizar</SfButton>
+                <SfButton type="button" @onclick="CerrarDialogo">Cerrar</SfButton>
+            </FooterTemplate>
+        </DialogTemplates>
+    </SfDialog>
+}
 
 @code {
+    public bool abrir = false;
+    public Persona personaActualizada = new Persona();
+    public Persona NuevaPersona = new Persona();
+    public List<Persona> personas = new List<Persona>();
+    public List<Persona> PagedData { get; set; } = new List<Persona>();
+    public int totalItems; // Total de items
+    public SfPager? Page;
 
+    protected override async Task OnInitializedAsync()
+    {
+        // Carga inicial de datos
+        personas = await Http.GetFromJsonAsync<List<Persona>>("api/Persona") ?? new List<Persona>();
+        totalItems = personas.Count; 
+        PagedData = personas.Take(5).ToList();
+    }
+
+    public async Task CrearPersona(Persona nuevaPersona)
+    {
+        var respuesta = await Http.PostAsJsonAsync("api/Persona", nuevaPersona);
+
+        if (respuesta.IsSuccessStatusCode)
+        {
+            NuevaPersona = new Persona();  // Limpia el formulario
+            personas = await Http.GetFromJsonAsync<List<Persona>>("api/Persona") ?? new List<Persona>();  // Recarga la lista
+            totalItems = personas.Count; // Actualiza el total de items
+            UpdatePagedData(1); // Actualiza la lista paginada
+        }
+        else
+        {
+            var errorMessage = await respuesta.Content.ReadAsStringAsync();
+            Console.WriteLine($"Error al crear persona: {errorMessage}");
+        }
+    }
+
+    public async Task EliminarPersona(int id)
+    {
+        var respuesta = await Http.DeleteAsync($"api/Persona/{id}");
+
+        if (respuesta.IsSuccessStatusCode)
+        {
+            personas = await Http.GetFromJsonAsync<List<Persona>>("api/Persona") ?? new List<Persona>();
+            totalItems = personas.Count; // Actualiza el total de items
+            UpdatePagedData(Page.CurrentPage); // Actualiza la lista paginada
+        }
+        else
+        {
+            var errorMessage = await respuesta.Content.ReadAsStringAsync();
+            Console.WriteLine($"Error al eliminar persona: {errorMessage}");
+        }
+    }
+
+    public async Task ActualizarPersona()
+    {
+        try
+        {
+            var respuesta = await Http.PutAsJsonAsync($"api/Persona/{personaActualizada.Id}", personaActualizada);
+
+            if (respuesta.IsSuccessStatusCode)
+            {
+                personas = await Http.GetFromJsonAsync<List<Persona>>("api/Persona") ?? new List<Persona>();
+                totalItems = personas.Count; // Actualiza el total de items
+                UpdatePagedData(Page.CurrentPage); // Actualiza la lista paginada
+                CerrarDialogo();
+            }
+            else
+            {
+                var errorMessage = await respuesta.Content.ReadAsStringAsync();
+                Console.WriteLine($"Error al actualizar persona: {errorMessage}");
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            Console.WriteLine($"Error de solicitud: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error inesperado: {ex.Message}");
+        }
+    }
+
+    public void AbreDialogo(Persona persona)
+    {
+        personaActualizada = new Persona
+            {
+                Id = persona.Id,
+                Name = persona.Name
+            };
+        abrir = true;
+    }
+
+    public void CerrarDialogo()
+    {
+        abrir = false;
+    }
+
+    public void Mayuscula(Microsoft.AspNetCore.Components.ChangeEventArgs e)
+    {
+        var valor = e.Value?.ToString();
+        if (!string.IsNullOrEmpty(valor))
+        {
+            valor = char.ToUpper(valor[0]) + valor.Substring(1).ToLower();
+            NuevaPersona.Name = valor; // Actualiza el campo de nombre en el modelo
+        }
+    }
+
+    public void HandleNumericClick(PagerItemClickEventArgs args)
+    {
+        UpdatePagedData(args.CurrentPage);
+    }
+
+    private void UpdatePagedData(int currentPage)
+    {
+        int skip = (currentPage - 1) * 5; // Calcula el valor a omitir
+        PagedData = personas.Skip(skip).Take(5).ToList(); // Actualiza la lista de datos paginados
+    }
 }
+

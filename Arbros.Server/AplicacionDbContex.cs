@@ -11,5 +11,6 @@ namespace Arbros.Server
             }
 
             public DbSet<Persona> Personas { get; set; }
-        }
+
     }
+}

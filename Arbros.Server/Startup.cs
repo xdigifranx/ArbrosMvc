@@ -21,9 +21,10 @@ namespace Arbros.Server
 			// Configuración de la base de datos
 			services.AddDbContext<AplicacionDbContex>(options =>
 				options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
-
-			// Agregar CORS para permitir solicitudes desde Blazor WebAssembly
-			services.AddCors(options =>
+            services.AddDbContext<UsuariosDbContext>(options =>
+			options.UseSqlServer(Configuration.GetConnectionString("UsuariosConnection")));
+            // Agregar CORS para permitir solicitudes desde Blazor WebAssembly
+            services.AddCors(options =>
 			{
 				options.AddPolicy("AllowAllOrigins",
 					builder => builder.AllowAnyOrigin()

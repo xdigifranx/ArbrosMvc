@@ -1,0 +1,64 @@
+﻿@page "/usuario"
+@inject HttpClient Http
+@using Arbros.Shared.Models
+@inject NavigationManager NavigationManager
+
+<h3>Ingreso de usuario</h3>
+<EditForm Model="@usuario" OnValidSubmit="Login">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <div class="mb-3">
+        <label for="Email" class="form-label">Email</label>
+        <InputText id="Email" @bind-Value="@usuario.Email" class="form-control" Type="InputType.Email" required/>
+        <ValidationMessage For="@(() => usuario.Email)" />
+    </div>
+
+    <div class="mb-3">
+        <label for="Password" class="form-label">Contraseña</label>
+        <input id="Password" @bind="@usuario.Password" class="form-control" Type="password" required/>
+        <ValidationMessage For="@(() => usuario.Password)" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Submit</button>
+    <NavLink href="registro" class="btn btn-link">Crear usuario</NavLink>
+</EditForm>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-success">@errorMessage</div>
+}
+
+
+@code {
+    private Usuarios usuario = new Usuarios();
+    private string errorMessage = string.Empty;
+
+    public async Task Login()
+    {
+        try
+        {
+
+            var registrar = await Http.PostAsJsonAsync("api/Usuarios/Login", usuario);
+
+            if (registrar.IsSuccessStatusCode)
+            {
+                var Response = await registrar.Content.ReadFromJsonAsync<Dictionary<string, string>>();
+
+                string user = Response["User"];
+
+                NavigationManager.NavigateTo($"/inicioregistrado/{user}");
+            }
+            else if (registrar.StatusCode == System.Net.HttpStatusCode.Conflict)
+            {
+                errorMessage = "Credenciales incorrectas";
+            }
+            
+
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Ocurrio un error.";
+            Console.WriteLine($"Error {ex.Message}");
+        }
+    }
+}

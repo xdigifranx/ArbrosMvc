@@ -1,6 +1,7 @@
 using Arbros.Server;
 using Arbros.Server.Components;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +27,9 @@ builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnC
 
 builder.Services.AddDbContext<AplicacionDbContex>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddDbContext<UsuariosDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("UsuariosConnection")));
 
 // Construir la aplicación
 var app = builder.Build();

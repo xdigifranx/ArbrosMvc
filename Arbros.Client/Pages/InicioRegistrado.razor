@@ -1,0 +1,9 @@
+﻿@page "/inicioregistrado/{user}"
+@using Arbros.Shared.Models
+
+<h3>Bienvenido, @user</h3>
+
+@code {
+    [Parameter]
+    public string user { get; set; } = string.Empty;
+}
