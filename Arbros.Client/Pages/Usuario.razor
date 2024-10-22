@@ -10,7 +10,7 @@
     <div class="mb-3">
         <label for="Email" class="form-label">Email</label>
         <InputText id="Email" @bind-Value="@usuario.Email" class="form-control" Type="InputType.Email" required/>
-        <ValidationMessage For="@(() => usuario.Email)" />
+        <ValidationMessage For="@(() => usuario.Email)"/>
     </div>
 
     <div class="mb-3">
@@ -19,7 +19,7 @@
         <ValidationMessage For="@(() => usuario.Password)" />
     </div>
 
-    <button type="submit" class="btn btn-primary">Submit</button>
+    <button type="submit" class="btn btn-primary">Ingresar</button>
     <NavLink href="registro" class="btn btn-link">Crear usuario</NavLink>
 </EditForm>
 
@@ -37,23 +37,31 @@
     {
         try
         {
-
             var registrar = await Http.PostAsJsonAsync("api/Usuarios/Login", usuario);
 
             if (registrar.IsSuccessStatusCode)
             {
+                
+                var responseText = await registrar.Content.ReadAsStringAsync();
+                Console.WriteLine($"Respuesta: {responseText}");
+
+                // Intentar deserializar a un diccionario
                 var Response = await registrar.Content.ReadFromJsonAsync<Dictionary<string, string>>();
 
-                string user = Response["User"];
-
-                NavigationManager.NavigateTo($"/inicioregistrado/{user}");
+                if (Response != null && Response.ContainsKey("user"))
+                {
+                    string user = Response["user"];
+                    NavigationManager.NavigateTo($"/inicioregistrado/{user}");
+                }
+                else
+                {
+                    errorMessage = "Error en la respuesta del servidor.";
+                }
             }
             else if (registrar.StatusCode == System.Net.HttpStatusCode.Conflict)
             {
                 errorMessage = "Credenciales incorrectas";
             }
-            
-
         }
         catch (Exception ex)
         {

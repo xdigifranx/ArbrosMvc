@@ -1,0 +1,20 @@
+﻿@* @using Arbros.Shared.Models
+@inject HttpClient Http
+<h3>Tiempo</h3>
+<GridColumn Field="Tiempo.Hora" Width="150" HeaderText="Fecha y hora">
+	<SfButton @onclick="TiempoHorario">Horario</SfButton>
+</GridColumn>
+
+@code {
+
+	public Tiempo horaActual = new Tiempo();
+	public List <Tiempo> fecha = new List<Tiempo>();
+
+	public void TiempoHorario()
+	{
+		// horaActual = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss");
+	}
+
+
+
+} *@

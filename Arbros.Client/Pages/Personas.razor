@@ -15,11 +15,12 @@
         <SfGrid DataSource="@PagedData" TValue="Persona" AllowDeleting="true">
             <GridColumns>
                 <GridColumn Field="@nameof(Persona.Name)" HeaderText="Nombre" Width="150"></GridColumn>
+                    <Tiempo/>
                 <GridColumn HeaderText="Acciones" Width="120">
                     <Template>
                         @if (context is Persona persona)
                         {
-                            <SfButton CssClass="e-danger" type="button" @onclick="async () => await EliminarPersona(persona.Id)">Eliminar</SfButton>
+                            <SfButton CssClass="e-danger" type="button" @onclick="() => AbreEliminar(persona.Id)">Eliminar</SfButton>
                             <SfButton CssClass="e-primary" type="button" @onclick="() => AbreDialogo(persona)">Actualizar</SfButton>
                         }
                     </Template>
@@ -29,7 +30,23 @@
         <SfPager @ref="@Page" PageSize="5" TotalItemsCount="@totalItems" NumericItemsCount="2" ItemClick="HandleNumericClick"></SfPager>
     </div>
 </div>
-
+@if (abrirEliminarDialogo)
+{
+    <SfDialog @bind-Visible="abrirEliminarDialogo" Width="300px" ShowCloseIcon="true">
+        <DialogTemplates>
+            <Header>
+                Confirmación de eliminación
+            </Header>
+            <Content>
+                ¿Está seguro de que desea eliminarlo?
+            </Content>
+            <FooterTemplate>
+                <SfButton CssClass="e-danger" @onclick="async () => await EliminarPersona(idPersonaAEliminar)">Aceptar</SfButton>
+                <SfButton @onclick="CerrarDialogoEliminar">Cancelar</SfButton>
+            </FooterTemplate>
+        </DialogTemplates>
+    </SfDialog>
+}
 @if (abrir)
 {
     <SfDialog @bind-Visible="abrir" Width="300px" ShowCloseIcon="true">
@@ -50,7 +67,10 @@
 
 @code {
     public bool abrir = false;
+    public bool abrirEliminarDialogo = false;
+    public int idPersonaAEliminar;
     public Persona personaActualizada = new Persona();
+    public Persona personaAEliminar = new Persona();
     public Persona NuevaPersona = new Persona();
     public List<Persona> personas = new List<Persona>();
     public List<Persona> PagedData { get; set; } = new List<Persona>();
@@ -92,6 +112,7 @@
             personas = await Http.GetFromJsonAsync<List<Persona>>("api/Persona") ?? new List<Persona>();
             totalItems = personas.Count; // Actualiza el total de items
             UpdatePagedData(Page.CurrentPage); // Actualiza la lista paginada
+            CerrarDialogoEliminar();
         }
         else
         {
@@ -127,6 +148,17 @@
         {
             Console.WriteLine($"Error inesperado: {ex.Message}");
         }
+    }
+    public void AbreEliminar(int id)
+    {
+        idPersonaAEliminar = id;  // Guarda el id de la persona a eliminar
+        abrirEliminarDialogo = true;  // Abre el diálogo de confirmación
+    }
+
+
+    public void CerrarDialogoEliminar()
+    {
+        abrirEliminarDialogo = false;
     }
 
     public void AbreDialogo(Persona persona)

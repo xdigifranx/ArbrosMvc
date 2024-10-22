@@ -35,33 +35,33 @@ namespace Arbros.Server.Controller
 
             if (resultado != null)
             {
-                return Ok(new { loginRequest.User });
+                return Ok(new { User = resultado.User });
             }
             else {
-                return Conflict("error");
+                return Conflict();
             }
-            
+
         }
-        //[HttpPost]
-        //public async Task<ActionResult<Usuarios>> PostUsuarios([FromBody] Usuarios usuarios)
-        //{
-        //    if (!ModelState.IsValid)
-        //    {
-        //        return BadRequest(ModelState);
-        //    }
+        [HttpPost("Registro")]
+        public async Task<IActionResult> Register([FromBody] Usuarios NuevoUsuario)
+        {
+            if (NuevoUsuario == null || string.IsNullOrEmpty(NuevoUsuario.Email) || string.IsNullOrEmpty(NuevoUsuario.Password))
+            {
+                return BadRequest(new { message = "Datos de usuario incompletos o inválidos" });
+            }
 
-        //    try
-        //    {
-        //        _context.Usuarios.Add(usuarios);
-        //        await _context.SaveChangesAsync();
-        //    }
-        //    catch (DbUpdateException ex)
-        //    {
-        //        return StatusCode(StatusCodes.Status500InternalServerError, $"Error al guardar el usuario: {ex.Message}");
-        //    }
+            if (_context.Usuarios.Any(u => u.Email == NuevoUsuario.Email))
+            {
+                return Conflict(new { message = "El correo ya está registrado" });
+            }
 
-        //    return CreatedAtAction(nameof(GetUsuarios), new { id = usuarios.Email }, usuarios);
-        //}
+            _context.Usuarios.Add(NuevoUsuario);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Usuario registrado exitosamente" });
+        }
+
     }
 }
+
 

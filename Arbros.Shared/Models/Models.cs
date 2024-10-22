@@ -2,6 +2,17 @@
 
 namespace Arbros.Shared.Models
 {
+    public class Paises
+    {
+        public int Id { get; set; }
+        public string Pais { get; set; } = string.Empty;
+     }
+    public class Tiempo
+    {
+        public int Id { get; set; }
+        public string Fecha { get; set; } = string.Empty;
+        public string Hora { get; set; } = string.Empty;
+    }
     public class Usuarios
     {
         [RegularExpression(@"^[a-zA-Z\s]*$", ErrorMessage = "Error en el usuario,sin caracteres especiales")]
