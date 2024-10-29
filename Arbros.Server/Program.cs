@@ -25,6 +25,9 @@ builder.Services.AddControllers();
 builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 // Configurar el DbContext
 
+builder.Services.AddDbContext<TiempoDbContex>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
 builder.Services.AddDbContext<AplicacionDbContex>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 

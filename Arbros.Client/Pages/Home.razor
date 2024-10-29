@@ -1,1 +1,101 @@
 ﻿@page "/"
+@inject HttpClient Http
+@using Arbros.Shared.Models
+@using Microsoft.AspNetCore.Components
+
+<h3>Agregar Tarea</h3>
+<input @bind="nuevaTarea" placeholder="Ingrese una tarea" />
+<SfButton CssClass="e-primary" @onclick="AgregarTarea">Agregar Tarea</SfButton>
+
+<SfGrid DataSource="tiempo">
+    <GridColumns>
+        <GridColumn Field="@nameof(Tiempo.Tareas)" HeaderText="Tarea" />
+        <GridColumn Field="@nameof(Tiempo.FechaCreacion)" HeaderText="Fecha de Creación" Format="yyyy-MM-dd HH:mm:ss" />
+        <GridColumn Field="@nameof(Tiempo.HoraInicio)" HeaderText="Inicio de Trabajo" Format="yyyy-MM-dd HH:mm:ss" />
+        <GridColumn Field="@nameof(Tiempo.HoraFin)" HeaderText="Fin de Trabajo" Format="yyyy-MM-dd HH:mm:ss" />
+        <GridColumn HeaderText="Acciones">
+            <Template Context="tiempoItem">
+                <SfButton CssClass="e-primary" @onclick="() => RegistrarInicioTrabajo((Tiempo)tiempoItem)">Iniciar</SfButton>
+                <SfButton CssClass="e-danger" @onclick="() => RegistrarFinalizacionTrabajo((Tiempo)tiempoItem)">Finalizar</SfButton>
+            </Template>
+        </GridColumn>
+    </GridColumns>
+</SfGrid>
+
+@code {
+    private List<Tiempo> tiempo = new List<Tiempo>();
+    private string? nuevaTarea;
+
+    // Carga las tareas al inicializar el componente
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarTareas();
+    }
+
+    // Agrega una nueva tarea
+    private async Task AgregarTarea()
+    {
+        if (!string.IsNullOrWhiteSpace(nuevaTarea))
+        {
+            var nuevaEntrada = new Tiempo
+                {
+                    Tareas = nuevaTarea,
+                    FechaCreacion = DateTime.Now,
+                    HoraInicio = null, // Inicialmente null
+                    HoraFin = null
+
+                };
+
+            var response = await Http.PostAsJsonAsync("api/Tiempo", nuevaEntrada);
+            if (response.IsSuccessStatusCode)
+            {
+                await CargarTareas(); // Recarga la lista de tareas
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Error: {response.StatusCode}, {errorContent}");
+            }
+
+            nuevaTarea = string.Empty; // Limpia el campo de entrada
+        }
+    }
+
+    // Carga la lista de tareas
+    private async Task CargarTareas()
+    {
+        var response = await Http.GetFromJsonAsync<List<Tiempo>>("api/Tiempo");
+        if (response != null)
+        {
+            tiempo = response; // Actualiza la lista de tareas
+            StateHasChanged(); // Notifica a Blazor que debe volver a renderizar
+        }
+    }
+
+    // Registra el inicio de un trabajo
+    private async Task RegistrarInicioTrabajo(Tiempo trabajo)
+    {
+        trabajo.HoraInicio = DateTime.Now; // Establece HoraInicio al momento actual
+        var response = await Http.PostAsJsonAsync($"api/Tiempo/IniciarTrabajo", trabajo);
+        if (response.IsSuccessStatusCode)
+        {
+            await CargarTareas(); // Recarga la lista de tareas
+        }
+
+    }
+
+    // Registra la finalización de un trabajo
+    private async Task RegistrarFinalizacionTrabajo(Tiempo trabajo)
+    {
+        trabajo.HoraFin = DateTime.Now; // Establece HoraFin al momento actual
+        var response = await Http.PostAsync($"api/Tiempo/FinalizarTrabajo/{trabajo.Id}", null);
+        if (response.IsSuccessStatusCode)
+        {
+            await CargarTareas(); // Recarga la lista de tareas
+        }
+    }
+}
+
+
+
+
