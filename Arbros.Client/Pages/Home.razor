@@ -7,6 +7,8 @@
 <input @bind="nuevaTarea" placeholder="Ingrese una tarea" />
 <SfButton CssClass="e-primary" @onclick="AgregarTarea">Agregar Tarea</SfButton>
 
+@* INICIO DE LA TABLA *@
+
 <SfGrid DataSource="tiempo">
     <GridColumns>
         <GridColumn Field="@nameof(Tiempo.Tareas)" HeaderText="Tarea" />
@@ -15,16 +17,28 @@
         <GridColumn Field="@nameof(Tiempo.HoraFin)" HeaderText="Fin de Trabajo" Format="yyyy-MM-dd HH:mm:ss" />
         <GridColumn HeaderText="Acciones">
             <Template Context="tiempoItem">
-                <SfButton CssClass="e-primary" @onclick="() => RegistrarInicioTrabajo((Tiempo)tiempoItem)">Iniciar</SfButton>
-                <SfButton CssClass="e-danger" @onclick="() => RegistrarFinalizacionTrabajo((Tiempo)tiempoItem)">Finalizar</SfButton>
+                <SfButton CssClass="e-primary"
+                          @onclick="() => IniciarTrabajo((Tiempo)tiempoItem)"
+                          Disabled="@IsIniciarButtonDisabled((Tiempo)tiempoItem)">
+                    Iniciar
+                </SfButton>
+                <SfButton CssClass="e-danger"
+                          @onclick="() => RegistrarFinalizacionTrabajo((Tiempo)tiempoItem)"
+                          Disabled="@IsFinalizarButtonDisabled((Tiempo)tiempoItem)">
+                    Finalizar
+                </SfButton>
             </Template>
         </GridColumn>
     </GridColumns>
 </SfGrid>
 
+@* FINAL DE LA TABLA *@
+
 @code {
-    private List<Tiempo> tiempo = new List<Tiempo>();
+    public List<Tiempo> tiempo = new List<Tiempo>();
     private string? nuevaTarea;
+    private HashSet<int> trabajosIniciados = new HashSet<int>();
+    private HashSet<int> trabajosFinalizados = new HashSet<int>();
 
     // Carga las tareas al inicializar el componente
     protected override async Task OnInitializedAsync()
@@ -32,7 +46,6 @@
         await CargarTareas();
     }
 
-    // Agrega una nueva tarea
     private async Task AgregarTarea()
     {
         if (!string.IsNullOrWhiteSpace(nuevaTarea))
@@ -41,9 +54,8 @@
                 {
                     Tareas = nuevaTarea,
                     FechaCreacion = DateTime.Now,
-                    HoraInicio = null, // Inicialmente null
+                    HoraInicio = null,
                     HoraFin = null
-
                 };
 
             var response = await Http.PostAsJsonAsync("api/Tiempo", nuevaEntrada);
@@ -73,28 +85,43 @@
     }
 
     // Registra el inicio de un trabajo
-    private async Task RegistrarInicioTrabajo(Tiempo trabajo)
+    private async Task IniciarTrabajo(Tiempo trabajo)
     {
         trabajo.HoraInicio = DateTime.Now; // Establece HoraInicio al momento actual
-        var response = await Http.PostAsJsonAsync($"api/Tiempo/IniciarTrabajo", trabajo);
+        var response = await Http.PostAsJsonAsync("api/Tiempo/IniciarTrabajo", trabajo);
         if (response.IsSuccessStatusCode)
         {
-            await CargarTareas(); // Recarga la lista de tareas
+            trabajosIniciados.Add(trabajo.Id);
+            await CargarTareas();
         }
-
     }
 
     // Registra la finalización de un trabajo
     private async Task RegistrarFinalizacionTrabajo(Tiempo trabajo)
     {
-        trabajo.HoraFin = DateTime.Now; // Establece HoraFin al momento actual
         var response = await Http.PostAsync($"api/Tiempo/FinalizarTrabajo/{trabajo.Id}", null);
         if (response.IsSuccessStatusCode)
         {
-            await CargarTareas(); // Recarga la lista de tareas
+            trabajosFinalizados.Add(trabajo.Id);
+            await CargarTareas();
         }
     }
+
+    // Método para verificar si el botón "Iniciar" debe estar deshabilitado
+    private bool IsIniciarButtonDisabled(Tiempo trabajo)
+    {
+        return trabajosIniciados.Contains(trabajo.Id) || trabajo.HoraInicio != null;
+    }
+
+    // Método para verificar si el botón "Finalizar" debe estar deshabilitado
+    private bool IsFinalizarButtonDisabled(Tiempo trabajo)
+    {
+        return trabajosFinalizados.Contains(trabajo.Id) || trabajo.HoraFin != null;
+    }
 }
+
+
+
 
 
 

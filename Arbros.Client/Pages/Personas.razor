@@ -31,7 +31,7 @@
         <SfGrid DataSource="@PagedData" TValue="Persona">
            <GridColumns >
             <GridColumn Field="@nameof(Persona.Name)" HeaderText="Nombre" Width="150" AllowFiltering="true"></GridColumn>
-                <GridColumn Field="@nameof(Persona.Pais.Pais)" HeaderText="País" Width="150" AllowFiltering="true">
+            <GridColumn Field="@nameof(Persona.Pais.Pais)" HeaderText="País" Width="150" AllowFiltering="true">
                 <Template>
                     @if (context is Persona persona && persona.Pais != null)
                     {
@@ -134,7 +134,6 @@
         {
             NuevaPersona = new Persona();  // Limpia el formulario
             personas = await Http.GetFromJsonAsync<List<Persona>>("api/Persona") ?? new List<Persona>();
-            /* ListaPaises = await Http.GetFromJsonAsync<List<Paises>>("api/paises") ?? new List<Paises>(); */// Recarga la lista
             totalItems = personas.Count; // Actualiza el total de items
             UpdatePagedData(1); // Actualiza la lista paginada
         }
