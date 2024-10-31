@@ -107,16 +107,15 @@
         }
     }
 
-    // Método para verificar si el botón "Iniciar" debe estar deshabilitado
-    private bool IsIniciarButtonDisabled(Tiempo trabajo)
+    public bool IsIniciarButtonDisabled(Tiempo trabajo)
     {
         return trabajosIniciados.Contains(trabajo.Id) || trabajo.HoraInicio != null;
     }
 
-    // Método para verificar si el botón "Finalizar" debe estar deshabilitado
-    private bool IsFinalizarButtonDisabled(Tiempo trabajo)
+
+    public bool IsFinalizarButtonDisabled(Tiempo trabajo)
     {
-        return trabajosFinalizados.Contains(trabajo.Id) || trabajo.HoraFin != null;
+      return trabajosFinalizados.Contains(trabajo.Id) || trabajo.HoraFin != null|| trabajo.HoraInicio==null;
     }
 }
 
