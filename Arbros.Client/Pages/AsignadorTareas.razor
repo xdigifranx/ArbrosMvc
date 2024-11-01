@@ -1,12 +1,41 @@
 ﻿@using Arbros.Shared.Models;
 @page "/TareasPersonas"
+@inject HttpClient Http
 
 <h3>AsignadorTareas</h3>
 
-<SfGrid TValue="Tiempo">
+<InputText @bind-Value="Tarea.Tareas" >Tarea</InputText>
+<InputSelect @bind-Value="Tarea.PersonaId">
+	<option value="">Seleccione un empleado</option>
+	@foreach (var empleado in empleados)
+	{
+		<option value="@empleado.Id.ToString()">@empleado.Name</option>
+	}
+</InputSelect>
 
+<SfGrid TValue="Tiempo">
+	<GridColumns>
+		<GridColumn HeaderText="Avatar" />
+		<GridColumn HeaderText="Personas" Field="@nameof(Persona.Name)" />
+		<GridColumn HeaderText="Tarea" Field="@nameof(Tiempo.Tareas)" />
+		<GridColumn HeaderText="Acciones">
+			<Template>
+				<SfButton CssClass="e-primary" type="button">Inicio</SfButton>
+				<SfButton CssClass="e-danger" type="button">Fin</SfButton>
+			</Template>
+		</GridColumn>
+	</GridColumns>
 </SfGrid>
 
 @code {
+	public Tiempo Tarea = new Tiempo();
+	public List<Persona> empleados = new List<Persona>();
+	public List<Tiempo> Tareas = new List<Tiempo>();
+
+	protected override async Task OnInitializedAsync()
+	{
+		Tareas = await Http.GetFromJsonAsync<List<Tiempo>>("api/Tiempo") ?? new List<Tiempo>();
+		empleados = await Http.GetFromJsonAsync<List<Persona>>("api/Personas") ?? new List<Persona>();
+	} 
 
 }

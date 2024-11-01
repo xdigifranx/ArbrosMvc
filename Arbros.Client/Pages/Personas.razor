@@ -91,7 +91,23 @@
                 Actualizar Persona
             </Header>
             <Content>
-                <SfTextBox></SfTextBox>
+                @if (ListaPaises != null && ListaPaises.Any())
+                {
+                    <select @bind="personaActualizada.PaisId" class="form-select">
+                        <option value="">Seleccionar país</option>
+                        @foreach (var pais in ListaPaises)
+                        {
+                            <option value="@pais.Id">@pais.Pais</option>
+                        }
+                    </select>
+
+
+                }
+                else
+                {
+                    <span>Cargando países...</span>
+                }
+
                 <SfTextBox @bind-Value="personaActualizada.Name" placeholder="Nombre" @oninput="(Microsoft.AspNetCore.Components.ChangeEventArgs e) => Mayuscula(e)"></SfTextBox>
             </Content>
             <FooterTemplate>
@@ -106,7 +122,7 @@
     public bool abrir = false;
     public bool abrirEliminarDialogo = false;
     public int idPersonaAEliminar;
-    public Persona personaActualizada = new Persona();
+    public Persona personaActualizada = new Persona { PaisId = 0 }; 
     public Persona personaAEliminar = new Persona();
     public Persona NuevaPersona = new Persona();
     public List<Persona> personas = new List<Persona>();
@@ -119,8 +135,7 @@
     {
         // Carga inicial de datos
         personas = await Http.GetFromJsonAsync<List<Persona>>("api/Persona") ?? new List<Persona>();
-        ListaPaises = await Http.GetFromJsonAsync<List<Paises>>("api/paises") ?? new List<Paises>(); 
-
+        ListaPaises = await Http.GetFromJsonAsync<List<Paises>>("api/paises") ?? new List<Paises>();
         totalItems = personas.Count;
         PagedData = personas.Take(5)
         .ToList();
@@ -167,13 +182,19 @@
     {
         try
         {
+            // Realiza la solicitud PUT para actualizar la persona
             var respuesta = await Http.PutAsJsonAsync($"api/Persona/{personaActualizada.Id}", personaActualizada);
 
             if (respuesta.IsSuccessStatusCode)
             {
+                // Si la actualización fue exitosa, recarga la lista de personas
                 personas = await Http.GetFromJsonAsync<List<Persona>>("api/Persona") ?? new List<Persona>();
                 totalItems = personas.Count; // Actualiza el total de items
-                UpdatePagedData(Page.CurrentPage); // Actualiza la lista paginada
+
+                // Actualiza los datos paginados
+                UpdatePagedData(Page.CurrentPage);
+
+                // Cierra el diálogo de actualización
                 CerrarDialogo();
             }
             else
@@ -182,15 +203,14 @@
                 Console.WriteLine($"Error al actualizar persona: {errorMessage}");
             }
         }
-        catch (HttpRequestException ex)
-        {
-            Console.WriteLine($"Error de solicitud: {ex.Message}");
-        }
         catch (Exception ex)
         {
             Console.WriteLine($"Error inesperado: {ex.Message}");
         }
     }
+
+
+
 
     public void AbreEliminar(int id)
     {
@@ -205,13 +225,23 @@
 
     public void AbreDialogo(Persona persona)
     {
-        personaActualizada = new Persona
-            {
-                Id = persona.Id,
-                Name = persona.Name
-            };
-        abrir = true;
+        if (ListaPaises != null && ListaPaises.Any())
+        {
+            personaActualizada = new Persona
+                {
+                    Id = persona.Id,
+                    Name = persona.Name,
+                    PaisId = persona.PaisId // Asegúrate de incluir PaisId
+                };
+            abrir = true;
+        }
+        else
+        {
+            Console.WriteLine("Lista de países no está disponible.");
+            abrir = false; // Cerrar el diálogo si no hay países
+        }
     }
+
 
     public void CerrarDialogo()
     {

@@ -81,24 +81,26 @@ namespace Arbros.Server.Controllers
 
 
         [HttpPut("{id}")]
-        public async Task<ActionResult<List<Persona>>> UpdatePersona(Persona objeto)
+        public async Task<ActionResult<List<Persona>>> UpdatePersona(int id, Persona objeto)
         {
-            if (objeto.PaisId <= 0) // Asegúrate de que PaisId es válido
-            {
-                return BadRequest("PaisId es requerido.");
-            }
+            if (id != objeto.Id) return BadRequest("ID no coincide.");
 
-            var DbObjeto = await _context.Personas.FindAsync(objeto.Id);
-            if (DbObjeto == null)
-                return BadRequest("No se encuentra la persona.");
+            // Asegúrate de que PaisId sea válido
+            if (objeto.PaisId <= 0) return BadRequest("PaisId es requerido.");
 
+            var DbObjeto = await _context.Personas.FindAsync(id);
+            if (DbObjeto == null) return NotFound("No se encuentra la persona.");
+
+            // Actualiza las propiedades necesarias
             DbObjeto.Name = objeto.Name;
-            DbObjeto.PaisId = objeto.PaisId; // Actualiza también el PaisId
+            DbObjeto.PaisId = objeto.PaisId;
 
             await _context.SaveChangesAsync();
 
             return Ok(await _context.Personas.ToListAsync());
         }
+
+
 
 
 
