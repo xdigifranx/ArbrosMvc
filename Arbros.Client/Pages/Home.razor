@@ -5,6 +5,13 @@
 
 <h3>Agregar Tarea</h3>
 <input @bind="nuevaTarea" placeholder="Ingrese una tarea" />
+<select @bind="selectedPersonaId" class="form-select" style="margin-bottom:20;">
+    <option value="">Seleccione una persona</option>
+    @foreach (var persona in personas)
+    {
+        <option value="@persona.Id">@persona.Name</option>
+    }
+</select>
 <SfButton CssClass="e-primary" @onclick="AgregarTarea">Agregar Tarea</SfButton>
 
 @* INICIO DE LA TABLA *@
@@ -12,7 +19,37 @@
 <SfGrid DataSource="tiempo">
     <GridColumns>
         <GridColumn Field="@nameof(Tiempo.Tareas)" HeaderText="Tarea" />
-        <GridColumn Field="@nameof(Tiempo.FechaCreacion)" HeaderText="Fecha de Creación" Format="yyyy-MM-dd HH:mm:ss" />
+        <GridColumn HeaderText="Avatar">
+            <Template Context="tiempoItem">
+                @{
+                    var persona = personas.FirstOrDefault(p => p.Id == ((Tiempo)tiempoItem).PersonaId);
+                }
+                @if (persona != null && !string.IsNullOrEmpty(persona.AvatarUrl))
+                {
+                    <img src="@persona.AvatarUrl" alt="Avatar de @persona.Name" style="width: 30px; height: 30px; border-radius: 50%;" />
+                }
+                else
+                {
+                    <img src="imagenes/avatarDeUsuario.png" alt="Avatar por defecto" style="width: 30px; height: 30px; border-radius: 50%;" />
+                }
+            </Template>
+        </GridColumn>
+
+        <GridColumn HeaderText="Empleado">
+            <Template Context="tiempoItem">
+                @{
+                    var persona = personas.FirstOrDefault(p => p.Id == ((Tiempo)tiempoItem).PersonaId);
+                }
+                @if (persona != null)
+                {
+                    <span>@persona.Name</span>
+                }
+                else
+                {
+                    <span>No asignado</span>
+                }
+            </Template>
+        </GridColumn>
         <GridColumn Field="@nameof(Tiempo.HoraInicio)" HeaderText="Inicio de Trabajo" Format="yyyy-MM-dd HH:mm:ss" />
         <GridColumn Field="@nameof(Tiempo.HoraFin)" HeaderText="Fin de Trabajo" Format="yyyy-MM-dd HH:mm:ss" />
         <GridColumn HeaderText="Acciones">
@@ -36,26 +73,29 @@
 
 @code {
     public List<Tiempo> tiempo = new List<Tiempo>();
+    public List<Persona> personas = new List<Persona>();
     private string? nuevaTarea;
+    private int? selectedPersonaId;
     private HashSet<int> trabajosIniciados = new HashSet<int>();
     private HashSet<int> trabajosFinalizados = new HashSet<int>();
 
-    // Carga las tareas al inicializar el componente
     protected override async Task OnInitializedAsync()
     {
         await CargarTareas();
+        await CargarPersonas(); // Cargar las personas al inicializar
     }
 
     private async Task AgregarTarea()
     {
-        if (!string.IsNullOrWhiteSpace(nuevaTarea))
+        if (!string.IsNullOrWhiteSpace(nuevaTarea) && selectedPersonaId.HasValue)
         {
             var nuevaEntrada = new Tiempo
                 {
                     Tareas = nuevaTarea,
                     FechaCreacion = DateTime.Now,
                     HoraInicio = null,
-                    HoraFin = null
+                    HoraFin = null,
+                    PersonaId = selectedPersonaId.Value // Asignar el ID de la persona
                 };
 
             var response = await Http.PostAsJsonAsync("api/Tiempo", nuevaEntrada);
@@ -70,10 +110,10 @@
             }
 
             nuevaTarea = string.Empty; // Limpia el campo de entrada
+            selectedPersonaId = null; // Reinicia la selección de persona
         }
     }
 
-    // Carga la lista de tareas
     private async Task CargarTareas()
     {
         var response = await Http.GetFromJsonAsync<List<Tiempo>>("api/Tiempo");
@@ -84,7 +124,16 @@
         }
     }
 
-    // Registra el inicio de un trabajo
+    private async Task CargarPersonas()
+    {
+        var response = await Http.GetFromJsonAsync<List<Persona>>("api/Persona");
+        if (response != null)
+        {
+            personas = response; // Actualiza la lista de personas
+            StateHasChanged(); // Notifica a Blazor que debe volver a renderizar
+        }
+    }
+
     private async Task IniciarTrabajo(Tiempo trabajo)
     {
         trabajo.HoraInicio = DateTime.Now; // Establece HoraInicio al momento actual
@@ -96,7 +145,6 @@
         }
     }
 
-    // Registra la finalización de un trabajo
     private async Task RegistrarFinalizacionTrabajo(Tiempo trabajo)
     {
         var response = await Http.PostAsync($"api/Tiempo/FinalizarTrabajo/{trabajo.Id}", null);
@@ -112,16 +160,9 @@
         return trabajosIniciados.Contains(trabajo.Id) || trabajo.HoraInicio != null;
     }
 
-
     public bool IsFinalizarButtonDisabled(Tiempo trabajo)
     {
-      return trabajosFinalizados.Contains(trabajo.Id) || trabajo.HoraFin != null|| trabajo.HoraInicio==null;
+        return trabajosFinalizados.Contains(trabajo.Id) || trabajo.HoraFin != null || trabajo.HoraInicio == null;
     }
 }
-
-
-
-
-
-
 

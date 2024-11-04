@@ -25,9 +25,6 @@ namespace Arbros.Server.Controllers
             var lista = await _context.Personas
                 .Include(p => p.Pais)  // Esto incluye la información del país relacionado
                 .ToListAsync();
-
-            // Log de los datos recuperados
-            Console.WriteLine($"Total de personas recuperadas: {lista.Count}");
             foreach (var persona in lista)
             {
                 Console.WriteLine($"Nombre: {persona.Name}, País: {persona.Pais?.Pais}");
@@ -62,8 +59,6 @@ namespace Arbros.Server.Controllers
             {
                 return BadRequest("PaisId es requerido.");
             }
-
-            // Remover la referencia a Pais para evitar errores de validación.
             objeto.Pais = null;
 
             try

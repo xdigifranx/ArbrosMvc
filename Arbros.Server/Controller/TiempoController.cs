@@ -21,10 +21,12 @@ namespace Arbros.Server.Controller
 
         // Obtener todas las tareas
         [HttpGet]
-        public ActionResult<IQueryable<Tiempo>> GetTiempo()
+        public async Task<ActionResult<List<Tiempo>>> GetTiempo()
         {
-            return Ok(_context.Tiempo);
+            var tiempos = await _context.Tiempo.ToListAsync();
+            return Ok(tiempos);
         }
+
 
         // Agregar un nuevo objeto Tiempo
         [HttpPost]

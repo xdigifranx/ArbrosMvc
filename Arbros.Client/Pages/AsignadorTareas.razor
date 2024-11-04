@@ -1,36 +1,62 @@
-﻿@using Arbros.Shared.Models;
+﻿@inject HttpClient Http
+@using Arbros.Shared.Models;
 @page "/TareasPersonas"
-@inject HttpClient Http
-
 <h3>AsignadorTareas</h3>
 
-<InputText @bind-Value="Tarea.Tareas" >Tarea</InputText>
-<InputSelect @bind-Value="Tarea.PersonaId">
-	<option value="">Seleccione un empleado</option>
-	@foreach (var empleado in empleados)
-	{
-		<option value="@empleado.Id.ToString()">@empleado.Name</option>
-	}
+<InputSelect @bind-Value="Tarea.Tareas">
+    <option value="">Seleccionar tareas</option>
+    @foreach (var tarea in Tareas)
+    {
+        <option value="@tarea.Id">@tarea.Tareas</option> 
+    }
 </InputSelect>
 
+<InputSelect @bind-Value="Tarea.PersonaId">
+    <option value="">Seleccione un empleado</option>
+    @foreach (var empleado in empleados)
+    {
+        <option value="@empleado.Id.ToString()">@empleado.Name</option>
+    }
+</InputSelect>
+
+
 <SfGrid TValue="Tiempo">
-	<GridColumns>
-		<GridColumn HeaderText="Avatar" />
-		<GridColumn HeaderText="Personas" Field="@nameof(Persona.Name)" />
-		<GridColumn HeaderText="Tarea" Field="@nameof(Tiempo.Tareas)" />
-		<GridColumn HeaderText="Acciones">
-			<Template>
-				<SfButton CssClass="e-primary" type="button">Inicio</SfButton>
-				<SfButton CssClass="e-danger" type="button">Fin</SfButton>
-			</Template>
-		</GridColumn>
-	</GridColumns>
+    <GridColumns>
+        <GridColumn HeaderText="Avatar">
+            <Template>
+                @{
+                    var tiempo = (Tiempo)@context; // Hacer el cast a Tiempo
+                }
+                @if (tiempo.Persona != null)
+                {
+                    <img src="@tiempo.Persona.AvatarUrl" alt="Avatar" style="width: 50px; height: 50px; border-radius: 50%;" />
+                }
+                else
+                {
+                    <img src="/images/avatar.jpg" alt="Avatar por defecto" style="width: 50px; height: 50px; border-radius: 50%;" />
+                }
+            </Template>
+        </GridColumn>
+        <GridColumn HeaderText="Personas" Field="@nameof(Persona.Name)" />
+        <GridColumn HeaderText="Tarea" Field="@nameof(Tiempo.Tareas)" />
+        <GridColumn HeaderText="Acciones">
+            <Template>
+                <SfButton CssClass="e-primary" type="button">Inicio</SfButton>
+                <SfButton CssClass="e-danger" type="button">Fin</SfButton>
+            </Template>
+        </GridColumn>
+    </GridColumns>
 </SfGrid>
+
+
+
+
 
 @code {
 	public Tiempo Tarea = new Tiempo();
 	public List<Persona> empleados = new List<Persona>();
 	public List<Tiempo> Tareas = new List<Tiempo>();
+	
 
 	protected override async Task OnInitializedAsync()
 	{

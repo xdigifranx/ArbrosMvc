@@ -7,7 +7,7 @@
 
 <div style="padding-bottom:20px;">
     <EditForm Model="NuevaPersona">
-        <DataAnnotationsValidator />
+        <DataAnnotationsValidator/>
         <ValidationSummary/>
         <InputText @bind-Value="NuevaPersona.Name" placeholder="Nombre" @oninput="(Microsoft.AspNetCore.Components.ChangeEventArgs e) => Mayuscula(e)"></InputText>
 
@@ -271,5 +271,4 @@
             .Take(5)
             .ToList(); // Actualiza la lista de datos paginados
     }
-
 }
